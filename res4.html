@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html  lang="en">
+<head>
+  <title>HTML File Loader</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0; 
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      color: #0f0; /* Neon green */
+      font-size: 6em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #0f0; /* Neon green */
+      width: 100%;
+      font-size: 3em;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .btn-success {
+      background-color: #0f0; /* Neon green */
+      border: none;
+      color: black;
+      font-weight:bold ;
+      padding: 15px 30px;
+      font-size: 2em;
+      border-radius: 5px;
+    }
+
+    .btn-success:hover {
+      background-color: #33ff33; /* Lighter neon green */
+    }
+
+    #fileInput {
+      width: 100%;
+      padding: 10px;
+      font-size: 2em;
+      background-color: #111;
+      border: 1px solid #333;
+      border-radius: 5px;
+      color: #0f0;
+      margin-bottom: 20px;
+    }
+
+    #output {
+      color: #0f0;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>HTML Converter</h1>
+    <br>
+    <h2>1. Отправьте свой HTML-файл.</h2>
+    <h2>2. Алгоритм изменит его и отправит вам файл «modified.html». </h2>
+    <h2>3. Открыв его в браузере, вы автоматически получите 3D-объект в формате .obj.</h2>
+    <input type="file" id="fileInput">
+    <button onclick="loadFile()" class="btn btn-success">Загрузить</button>
+    <p id="output"></p>
+  </div>
+
+  <script>
+    function loadFile() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const htmlCode = e.target.result;
+
+        // Поиск кода с использованием регулярного выражения
+        const regex = /t\.prototype\.createModel(.*?),e\.CTMLoader/; 
+        const match = htmlCode.match(regex);
+
+        if (match) {
+          const targetCode = match[0]; // Найденный код
+          const extraCode = match[1]; // Дополнительный код (до ближайшего <)
+
+          // Новый код, который нужно подставить
+          const newCode = "t.prototype.createModel = function(a, e) {            var t = function() {                THREE.BufferGeometry.call(this),                this.materials = [];        var e, t, i = a.body.indices, n = a.body.vertices, r = a.body.normals, o = a.body.uvMaps;                void 0 !== o && 0 < o.length && (e = o[0].uv);                o = a.body.attrMaps;                void 0 !== o && 0 < o.length && `Color` === o[0].name && (t = o[0].attr),                this.setIndex(new THREE.BufferAttribute(i,1)),                this.addAttribute(`position`, new THREE.BufferAttribute(n,3)),                void 0 !== r && this.addAttribute(`normal`, new THREE.BufferAttribute(r,3)),                void 0 !== e && this.addAttribute(`uv`, new THREE.BufferAttribute(e,2)),                void 0 !== t && this.addAttribute(`color`, new THREE.BufferAttribute(t,4))            }              , t = new ((t.prototype = Object.create(THREE.BufferGeometry.prototype)).constructor = t);            void 0 === t.attributes.normal && t.computeVertexNormals(),            e(t);            function bufferGeometryToObj(geometry) {                let objString = `# OBJ file\n`;                                geometry.attributes.position.array.forEach((v, i) => {                    if (i % 3 === 0) {                        objString += `v ${v} ${geometry.attributes.position.array[i + 1]} ${geometry.attributes.position.array[i + 2]}\n`;                    }                });                geometry.index.array.forEach((i, index) => {                    if (index % 3 === 0) {                        objString += `f ${geometry.index.array[index] + 1} ${geometry.index.array[index + 1] + 1} ${geometry.index.array[index + 2] + 1}\n`;                    }                });                return objString;            }            function downloadObj(objData, filename) {                let blob = new Blob([objData], { type: 'text/plain' });                let url = window.URL.createObjectURL(blob);                let link = document.createElement('a');                link.href = url;                link.download = filename;                document.body.appendChild(link);                link.click();                document.body.removeChild(link);            }            let objData = bufferGeometryToObj(t);            downloadObj(objData, 'myModel.obj');        } ,e.CTMLoader"; 
+
+          // Замена найденного кода на новый
+          const modifiedHtml = htmlCode.replace(targetCode, newCode);
+
+          // Вывод результата в консоль
+          console.log(modifiedHtml);
+
+          // Создание элемента <a> для скачивания
+          const downloadLink = document.createElement('a');
+          downloadLink.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(modifiedHtml);
+          downloadLink.download = 'modified.html';
+          document.body.appendChild(downloadLink);
+          downloadLink.click(); 
+          document.body.removeChild(downloadLink);
+        } else {
+          document.getElementById('output').textContent = 'Код не найден';
+        }
+      };
+
+      reader.readAsText(file);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
